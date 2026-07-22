@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tetris</title>
+  <title>Neon Stack — Tetris</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,7 +13,9 @@
     <!-- MAIN MENU -->
     <div id="menuOverlay" class="overlay active">
       <div class="overlay-content menu-box">
-        <h1 class="title-glow">TETRIS</h1>
+        <div class="eyebrow">ARCADE MODE / 01</div>
+        <h1 class="title-glow">NEON<br><span>STACK</span></h1>
+        <p class="menu-subtitle">Stack clean. Chase the perfect drop.</p>
         <div class="menu-buttons">
           <button class="btn btn-primary" id="btnSolo">1 Player Solo</button>
           <div class="control-select" id="soloControlSelect">
@@ -92,11 +94,12 @@
         </div>
         <div class="side-panel">
           <div class="panel-box">
-            <div class="panel-label">NEXT</div>
+            <div class="panel-label">NEXT UP</div>
             <canvas id="nextCanvas1" width="120" height="120"></canvas>
           </div>
           <div class="panel-box stats-box">
             <div class="stat"><span class="stat-label">SCORE</span><span class="stat-value" id="score">0</span></div>
+            <div class="stat"><span class="stat-label">HIGH SCORE</span><span class="stat-value" id="highScore">0</span></div>
             <div class="stat"><span class="stat-label">LINES</span><span class="stat-value" id="lines">0</span></div>
             <div class="stat"><span class="stat-label">LEVEL</span><span class="stat-value" id="level">1</span></div>
             <div class="stat"><span class="stat-label">COMBO</span><span class="stat-value" id="comboVal">0</span></div>
@@ -122,11 +125,12 @@
             </div>
             <div class="side-panel">
               <div class="panel-box">
-                <div class="panel-label">NEXT</div>
+                <div class="panel-label">NEXT UP</div>
                 <canvas id="nextCanvasV1" width="90" height="90"></canvas>
               </div>
               <div class="panel-box stats-box">
                 <div class="stat"><span class="stat-label">SCORE</span><span class="stat-value" id="scoreV1">0</span></div>
+                <div class="stat"><span class="stat-label">BEST</span><span class="stat-value" id="highScoreV1">0</span></div>
                 <div class="stat"><span class="stat-label">LINES</span><span class="stat-value" id="linesV1">0</span></div>
                 <div class="stat"><span class="stat-label">LEVEL</span><span class="stat-value" id="levelV1">1</span></div>
               </div>
@@ -158,11 +162,12 @@
             </div>
             <div class="side-panel">
               <div class="panel-box">
-                <div class="panel-label">NEXT</div>
+                <div class="panel-label">NEXT UP</div>
                 <canvas id="nextCanvasV2" width="90" height="90"></canvas>
               </div>
               <div class="panel-box stats-box">
                 <div class="stat"><span class="stat-label">SCORE</span><span class="stat-value" id="scoreV2">0</span></div>
+                <div class="stat"><span class="stat-label">BEST</span><span class="stat-value" id="highScoreV2">0</span></div>
                 <div class="stat"><span class="stat-label">LINES</span><span class="stat-value" id="linesV2">0</span></div>
                 <div class="stat"><span class="stat-label">LEVEL</span><span class="stat-value" id="levelV2">1</span></div>
               </div>

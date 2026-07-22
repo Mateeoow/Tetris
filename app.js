@@ -2,8 +2,8 @@
 
 const COLS = 10, ROWS = 20, BUFFER = 2, TOTAL_ROWS = ROWS + BUFFER;
 const PIECE_TYPES = ['I','O','T','S','Z','J','L'];
-const COLORS = { I:'#00f5ff', O:'#ffe600', T:'#b537f2', S:'#39ff14', Z:'#ff2a6d', J:'#4488ff', L:'#ff8800', garbage:'#555566' };
-const DARKER = { I:'#009daa', O:'#b3a100', T:'#7a22a0', S:'#22aa0c', Z:'#b31c4b', J:'#2d55aa', L:'#aa5500', garbage:'#3a3a44' };
+const COLORS = { I:'#53e8ff', O:'#ffd166', T:'#c084fc', S:'#65e572', Z:'#ff5c8a', J:'#6ea8ff', L:'#ff9d5c', garbage:'#68718a' };
+const DARKER = { I:'#159bb5', O:'#c38d2c', T:'#7548b0', S:'#328d5a', Z:'#b32f62', J:'#3d66b1', L:'#b85d35', garbage:'#3f465d' };
 const GHOST_ALPHA = 0.25;
 const GRID_COLOR = '#1c1c2a';
 const GRID_BG = '#0e0e1a';
@@ -14,7 +14,7 @@ const LINES_PER_LEVEL = 10;
 const DAS_DELAY = 167, ARR_DELAY = 50;
 const LOCK_DELAY = 500, MAX_LOCK_RESETS = 15;
 const GARBAGE_DELAY = 600;
-const LINE_CLEAR_MS = 300, SOFT_DROP_INTERVAL = 40, MAX_FRAME_MS = 100;
+const LINE_CLEAR_MS = 360, LANDING_IMPACT_MS = 180, SOFT_DROP_INTERVAL = 40, MAX_FRAME_MS = 100;
 const BEST_OF = 5;
 
 function getDropInterval(level, speedMul) {
@@ -69,16 +69,15 @@ class Board {
     }
   }
   fullRows() {
-    const rows = [];
-    for (let r = 0; r < TOTAL_ROWS; r++) {
-      let full = true;
-      for (let c = 0; c < COLS; c++) { if (this.grid[r][c] === null) { full = false; break; } }
-      if (full) rows.push(r);
-    }
-    return rows;
+    return this.grid.reduce((rows, row, index) => {
+      if (row.every(cell => cell !== null)) rows.push(index);
+      return rows;
+    }, []);
   }
   removeRows(rows) {
-    for (let i = rows.length - 1; i >= 0; i--) { this.grid.splice(rows[i], 1); this.grid.unshift(Array(COLS).fill(null)); }
+    const rowsToRemove = new Set(rows);
+    this.grid = this.grid.filter((_, index) => !rowsToRemove.has(index));
+    while (this.grid.length < TOTAL_ROWS) this.grid.unshift(Array(COLS).fill(null));
   }
   addGarbage(count) {
     const gap = Math.floor(Math.random() * COLS);
@@ -115,6 +114,7 @@ class Player {
     this.dropAccum = 0; this.dropInterval = getDropInterval(1, this.speedMul);
     this.lockTimer = 0; this.lockResets = 0; this.onGround = false;
     this.clearRows = []; this.clearTimer = 0; this.clearing = false;
+    this.lastLockedCells = []; this.impactTimer = 0;
     this.pendingGarbage = 0; this.garbageTimer = 0; this.garbageQueued = false;
     this.alive = true;
     this._fillQ();
@@ -191,10 +191,24 @@ class Player {
   }
   _lock() {
     if (!this.piece) return;
-    this.board.lock(this.piece); this.piece = null;
+    const lockedPiece = {
+      type: this.piece.type,
+      rot: this.piece.rot,
+      col: this.piece.col,
+      row: this.piece.row
+    };
+    this.lastLockedCells = SHAPES[lockedPiece.type][lockedPiece.rot].map(([x, y]) => ({
+      x: lockedPiece.col + x,
+      y: lockedPiece.row + y
+    }));
+    this.board.lock(lockedPiece); this.piece = null;
+    this.impactTimer = LANDING_IMPACT_MS;
+
+    // Evaluate the entire grid once, before any row mutation. This preserves
+    // simultaneous doubles, triples, and tetrises as one clear event.
     const full = this.board.fullRows();
     if (full.length > 0) {
-      this.clearRows = full; this.clearing = true; this.clearTimer = LINE_CLEAR_MS;
+      this.clearRows = full.slice(); this.clearing = true; this.clearTimer = LINE_CLEAR_MS;
       this.combo++;
       this.score += (SCORE_TABLE[full.length] || 0) * this.level;
       if (this.combo > 0) this.score += COMBO_BONUS * this.combo * this.level;
@@ -221,13 +235,15 @@ class Player {
       if (this.clearTimer <= 0) {
         const n = this.clearRows.length;
         this.board.removeRows(this.clearRows);
-        this.clearRows = []; this.clearing = false; this.spawn();
+        this.clearRows = []; this.clearing = false; this.lastLockedCells = [];
+        this.spawn();
         if (this.alive) this._applyGarbage();
         return {cleared: n};
       }
       return null;
     }
     if (!this.piece) return null;
+    this.impactTimer = Math.max(0, this.impactTimer - dt);
     if (this.garbageQueued && this.pendingGarbage > 0) {
       this.garbageTimer += dt;
       if (this.garbageTimer >= GARBAGE_DELAY) { this._applyGarbage(); this.garbageTimer = 0; }
@@ -282,21 +298,28 @@ class Input {
 }
 
 const Renderer = {
-  drawBoard(ctx, board, piece, ghostY, cs, clearRows, clearT) {
+  drawBoard(ctx, board, piece, ghostY, cs, clearRows, clearT, lockedCells, impactT) {
     const w = COLS * cs, h = ROWS * cs;
-    ctx.fillStyle = GRID_BG; ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = GRID_COLOR; ctx.lineWidth = 0.5;
+    const background = ctx.createLinearGradient(0, 0, w, h);
+    background.addColorStop(0, '#10182d'); background.addColorStop(0.55, GRID_BG); background.addColorStop(1, '#100f24');
+    ctx.fillStyle = background; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = GRID_COLOR; ctx.lineWidth = 0.65;
+    ctx.globalAlpha = 0.8;
     for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * cs); ctx.lineTo(w, r * cs); ctx.stroke(); }
     for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * cs, 0); ctx.lineTo(c * cs, h); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    const lockedSet = new Set((lockedCells || []).map(cell => cell.x + ':' + cell.y));
     for (let r = BUFFER; r < TOTAL_ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         const v = board.grid[r][c]; if (!v) continue;
         const vis = r - BUFFER;
         if (clearRows.indexOf(r) !== -1) {
-          const flash = Math.floor(clearT / 50) % 2 === 0;
-          this._cell(ctx, c, vis, cs, flash ? '#ffffff' : COLORS[v], flash ? '#cccccc' : DARKER[v]);
+          const progress = 1 - clearT / LINE_CLEAR_MS;
+          const flash = Math.floor(clearT / 45) % 2 === 0;
+          this._cell(ctx, c, vis, cs, flash ? '#ffffff' : COLORS[v], flash ? '#d9e4ff' : DARKER[v], 1 - progress * 0.35, 1 + progress * 0.2);
         } else {
-          this._cell(ctx, c, vis, cs, COLORS[v], DARKER[v]);
+          const impact = lockedSet.has(c + ':' + r) ? Math.min(1, (impactT || 0) / LANDING_IMPACT_MS) : 0;
+          this._cell(ctx, c, vis, cs, COLORS[v], DARKER[v], 1, 1, impact);
         }
       }
     }
@@ -315,18 +338,38 @@ const Renderer = {
       }
     }
   },
-  _cell(ctx, col, row, s, fill, dark) {
-    const x = col * s + 1, y = row * s + 1, sz = s - 2;
-    ctx.fillStyle = fill; ctx.fillRect(x, y, sz, sz);
-    ctx.fillStyle = 'rgba(255,255,255,0.13)'; ctx.fillRect(x, y, sz, 2); ctx.fillRect(x, y, 2, sz);
-    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x, y + sz - 2, sz, 2); ctx.fillRect(x + sz - 2, y, 2, sz);
-    if (dark) { ctx.fillStyle = dark; ctx.fillRect(x + 2, y + sz - 4, sz - 4, 2); ctx.fillRect(x + sz - 4, y + 2, 2, sz - 4); }
+  _cell(ctx, col, row, s, fill, dark, alpha = 1, scale = 1, impact = 0) {
+    const inset = Math.max(1.5, s * 0.075), size = s - inset * 2;
+    const cx = col * s + s / 2, cy = row * s + s / 2;
+    const width = size * scale, height = size * scale;
+    const x = cx - width / 2, y = cy - height / 2, radius = Math.min(5, width * 0.18);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (impact > 0) { ctx.shadowColor = fill; ctx.shadowBlur = 8 + impact * 8; }
+    const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
+    gradient.addColorStop(0, '#ffffff'); gradient.addColorStop(0.08, fill); gradient.addColorStop(0.72, fill); gradient.addColorStop(1, dark || fill);
+    this._roundedRect(ctx, x, y, width, height, radius);
+    ctx.fillStyle = gradient; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.48)'; ctx.lineWidth = Math.max(0.65, s * 0.035); ctx.stroke();
+    ctx.globalAlpha = alpha * 0.2;
+    this._roundedRect(ctx, x + width * 0.12, y + height * 0.1, width * 0.76, Math.max(1.5, height * 0.11), radius * 0.5);
+    ctx.fillStyle = '#ffffff'; ctx.fill();
+    ctx.restore();
+  },
+  _roundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
   },
   _ghost(ctx, col, row, s, color) {
-    const x = col * s + 1, y = row * s + 1, sz = s - 2;
-    ctx.globalAlpha = GHOST_ALPHA; ctx.fillStyle = color; ctx.fillRect(x, y, sz, sz);
-    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.strokeRect(x + 0.5, y + 0.5, sz - 1, sz - 1);
-    ctx.globalAlpha = 1;
+    const inset = Math.max(1.5, s * 0.075), x = col * s + inset, y = row * s + inset, sz = s - inset * 2;
+    ctx.save(); ctx.globalAlpha = GHOST_ALPHA; ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    this._roundedRect(ctx, x, y, sz, sz, Math.min(5, sz * 0.18)); ctx.stroke(); ctx.restore();
   },
   drawPreview(ctx, type, cs, cw, ch) {
     ctx.clearRect(0, 0, cw, ch);
@@ -340,10 +383,7 @@ const Renderer = {
     const pw = (mxC - mnC + 1) * cs, ph = (mxR - mnR + 1) * cs;
     const ox = (cw - pw) / 2 - mnC * cs, oy = (ch - ph) / 2 - mnR * cs;
     for (let i = 0; i < cells.length; i++) {
-      const cx = cells[i][0] * cs + ox + 1, cy = cells[i][1] * cs + oy + 1, sz = cs - 2;
-      ctx.fillStyle = COLORS[type]; ctx.fillRect(cx, cy, sz, sz);
-      ctx.fillStyle = 'rgba(255,255,255,0.13)'; ctx.fillRect(cx, cy, sz, 2); ctx.fillRect(cx, cy, 2, sz);
-      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(cx, cy + sz - 2, sz, 2); ctx.fillRect(cx + sz - 2, cy, 2, sz);
+      this._cell(ctx, (cells[i][0] * cs + ox) / cs, (cells[i][1] * cs + oy) / cs, cs, COLORS[type], DARKER[type]);
     }
   }
 };
@@ -354,6 +394,7 @@ class Game {
     this.speedMul = 1; this.soloControl = 'wasd';
     this.players = []; this.input = new Input();
     this.p1Wins = 0; this.p2Wins = 0; this.gameNum = 0;
+    this.highScore = this._loadHighScore();
     this.lastT = 0; this.cvs = {}; this.ctx = {};
     this._bgCvs = document.getElementById('bgCanvas');
     this._bgCtx = this._bgCvs.getContext('2d');
@@ -382,6 +423,16 @@ class Game {
     }
   }
   _resizeBG() { this._bgCvs.width = window.innerWidth; this._bgCvs.height = window.innerHeight; }
+  _loadHighScore() {
+    try { return Number(localStorage.getItem('neon-tetris-high-score')) || 0; }
+    catch (_) { return 0; }
+  }
+  _saveHighScore(score) {
+    if (score <= this.highScore) return;
+    this.highScore = score;
+    try { localStorage.setItem('neon-tetris-high-score', String(score)); }
+    catch (_) { /* Storage may be unavailable when opened from a local file. */ }
+  }
   _drawBG() {
     const ctx = this._bgCtx, w = this._bgCvs.width, h = this._bgCvs.height;
     ctx.fillStyle = '#0a0a0f'; ctx.fillRect(0, 0, w, h);
@@ -548,12 +599,16 @@ class Game {
   _renderSolo() {
     const p = this.players[0]; if (!p) return;
     const cs = this._cs('gameCanvas');
-    Renderer.drawBoard(this.ctx['gameCanvas'], p.board, p.piece, p.ghostRow(), cs, p.clearRows, p.clearTimer);
+    Renderer.drawBoard(this.ctx['gameCanvas'], p.board, p.piece, p.ghostRow(), cs, p.clearRows, p.clearTimer, p.lastLockedCells, p.impactTimer);
     Renderer.drawPreview(this.ctx['holdCanvas1'], p.holdType, 28, 120, 120);
     Renderer.drawPreview(this.ctx['nextCanvas1'], p.nextPreview(), 28, 120, 120);
+    this._saveHighScore(p.score);
     document.getElementById('score').textContent = p.score.toLocaleString();
+    document.getElementById('highScore').textContent = this.highScore.toLocaleString();
     document.getElementById('lines').textContent = p.lines;
     document.getElementById('level').textContent = p.level;
+    document.getElementById('comboVal').textContent = p.combo > 0 ? 'x' + (p.combo + 1) : '—';
+    document.getElementById('attackVal').textContent = p.pendingGarbage;
   }
   _renderVersus() {
     for (let i = 0; i < 2; i++) {
@@ -562,15 +617,18 @@ class Game {
       const holdId = i === 0 ? 'holdCanvasV1' : 'holdCanvasV2';
       const nextId = i === 0 ? 'nextCanvasV1' : 'nextCanvasV2';
       const cs = this._cs(boardId);
-      Renderer.drawBoard(this.ctx[boardId], p.board, p.piece, p.ghostRow(), cs, p.clearRows, p.clearTimer);
+      Renderer.drawBoard(this.ctx[boardId], p.board, p.piece, p.ghostRow(), cs, p.clearRows, p.clearTimer, p.lastLockedCells, p.impactTimer);
       Renderer.drawPreview(this.ctx[holdId], p.holdType, 18, 90, 90);
       Renderer.drawPreview(this.ctx[nextId], p.nextPreview(), 18, 90, 90);
+      this._saveHighScore(p.score);
       if (i === 0) {
         document.getElementById('scoreV1').textContent = p.score.toLocaleString();
+        document.getElementById('highScoreV1').textContent = this.highScore.toLocaleString();
         document.getElementById('linesV1').textContent = p.lines;
         document.getElementById('levelV1').textContent = p.level;
       } else {
         document.getElementById('scoreV2').textContent = p.score.toLocaleString();
+        document.getElementById('highScoreV2').textContent = this.highScore.toLocaleString();
         document.getElementById('linesV2').textContent = p.lines;
         document.getElementById('levelV2').textContent = p.level;
       }
