@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetris</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- MAIN MENU -->
+    <div id="menuOverlay" class="overlay active">
+      <div class="overlay-content menu-box">
+        <h1 class="title-glow">TETRIS</h1>
+        <div class="menu-buttons">
+          <button class="btn btn-primary" id="btnSolo">1 Player Solo</button>
+          <div class="control-select" id="soloControlSelect">
+            <div class="control-option">
+              <input type="radio" id="ctrlWASD" name="soloControl" value="wasd" checked>
+              <label for="ctrlWASD"><span class="key">A</span><span class="key">W</span><span class="key">S</span><span class="key">D</span> + <span class="key">Space</span></label>
+            </div>
+            <div class="control-option">
+              <input type="radio" id="ctrlArrows" name="soloControl" value="arrows">
+              <label for="ctrlArrows"><span class="key">&larr;</span><span class="key">&uarr;</span><span class="key">&darr;</span><span class="key">&rarr;</span> + <span class="key">Enter</span></label>
+            </div>
+          </div>
+          <button class="btn btn-secondary" id="btnVersus">2 Player Versus</button>
+          <div class="speed-control">
+            <label class="speed-label">BLOCK SPEED</label>
+            <div class="speed-row">
+              <span class="speed-val">Slow</span>
+              <input type="range" id="speedSlider" min="0.3" max="3" step="0.1" value="1">
+              <span class="speed-val">Fast</span>
+            </div>
+            <div class="speed-current" id="speedDisplay">1.0x</div>
+          </div>
+          <button class="btn btn-outline" id="btnControls">Controls</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS MODAL -->
+    <div id="controlsOverlay" class="overlay">
+      <div class="overlay-content controls-box">
+        <h2>Controls</h2>
+        <div class="controls-grid">
+          <div class="controls-col">
+            <h3>Solo</h3>
+            <div class="key-row"><span class="key">&larr;</span> Move Left</div>
+            <div class="key-row"><span class="key">&rarr;</span> Move Right</div>
+            <div class="key-row"><span class="key">&darr;</span> Soft Drop</div>
+            <div class="key-row"><span class="key">&uarr;</span> Rotate CW</div>
+            <div class="key-row"><span class="key">Space</span> Hard Drop</div>
+            <div class="key-row"><span class="key">C</span> Hold</div>
+          </div>
+          <div class="controls-col">
+            <h3>Versus</h3>
+            <div class="key-row"><span class="key">A/D</span> P1 Move</div>
+            <div class="key-row"><span class="key">S</span> P1 Soft Drop</div>
+            <div class="key-row"><span class="key">W</span> P1 Rotate</div>
+            <div class="key-row"><span class="key">Space</span> P1 Hard Drop</div>
+            <div class="key-row"><span class="key">C</span> P1 Hold</div>
+            <div class="key-row" style="margin-top:8px"><span class="key">&larr;/&rarr;</span> P2 Move</div>
+            <div class="key-row"><span class="key">&darr;</span> P2 Soft Drop</div>
+            <div class="key-row"><span class="key">&uarr;</span> P2 Rotate</div>
+            <div class="key-row"><span class="key">Enter</span> P2 Hard Drop</div>
+            <div class="key-row"><span class="key">Num0</span> P2 Hold</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:12px">
+          <div class="key-row"><span class="key">Esc</span> Pause</div>
+        </div>
+        <button class="btn btn-outline" id="btnBackMenu">Back</button>
+      </div>
+    </div>
+
+    <!-- GAME AREA -->
+    <div id="gameArea">
+      <!-- SOLO -->
+      <div id="soloArea" class="game-layout solo-layout hidden">
+        <div class="side-panel">
+          <div class="panel-box">
+            <div class="panel-label">HOLD</div>
+            <canvas id="holdCanvas1" width="120" height="120"></canvas>
+          </div>
+        </div>
+        <div class="board-container">
+          <canvas id="gameCanvas" width="300" height="600"></canvas>
+          <div class="board-border"></div>
+        </div>
+        <div class="side-panel">
+          <div class="panel-box">
+            <div class="panel-label">NEXT</div>
+            <canvas id="nextCanvas1" width="120" height="120"></canvas>
+          </div>
+          <div class="panel-box stats-box">
+            <div class="stat"><span class="stat-label">SCORE</span><span class="stat-value" id="score">0</span></div>
+            <div class="stat"><span class="stat-label">LINES</span><span class="stat-value" id="lines">0</span></div>
+            <div class="stat"><span class="stat-label">LEVEL</span><span class="stat-value" id="level">1</span></div>
+            <div class="stat"><span class="stat-label">COMBO</span><span class="stat-value" id="comboVal">0</span></div>
+            <div class="stat"><span class="stat-label">ATTACK</span><span class="stat-value" id="attackVal">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VERSUS -->
+      <div id="versusArea" class="game-layout versus-layout hidden">
+        <div class="player-section">
+          <div class="player-label p1-color">PLAYER 1</div>
+          <div class="player-area">
+            <div class="side-panel">
+              <div class="panel-box">
+                <div class="panel-label">HOLD</div>
+                <canvas id="holdCanvasV1" width="90" height="90"></canvas>
+              </div>
+            </div>
+            <div class="board-container">
+              <canvas id="gameCanvasV1" width="250" height="500"></canvas>
+              <div class="board-border"></div>
+            </div>
+            <div class="side-panel">
+              <div class="panel-box">
+                <div class="panel-label">NEXT</div>
+                <canvas id="nextCanvasV1" width="90" height="90"></canvas>
+              </div>
+              <div class="panel-box stats-box">
+                <div class="stat"><span class="stat-label">SCORE</span><span class="stat-value" id="scoreV1">0</span></div>
+                <div class="stat"><span class="stat-label">LINES</span><span class="stat-value" id="linesV1">0</span></div>
+                <div class="stat"><span class="stat-label">LEVEL</span><span class="stat-value" id="levelV1">1</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vs-divider">
+          <div class="vs-text">VS</div>
+          <div class="win-display" id="winDisplay">
+            <span class="p1-color win-counter">0</span>
+            <span class="win-sep">-</span>
+            <span class="p2-color win-counter">0</span>
+          </div>
+        </div>
+
+        <div class="player-section">
+          <div class="player-label p2-color">PLAYER 2</div>
+          <div class="player-area">
+            <div class="side-panel">
+              <div class="panel-box">
+                <div class="panel-label">HOLD</div>
+                <canvas id="holdCanvasV2" width="90" height="90"></canvas>
+              </div>
+            </div>
+            <div class="board-container">
+              <canvas id="gameCanvasV2" width="250" height="500"></canvas>
+              <div class="board-border"></div>
+            </div>
+            <div class="side-panel">
+              <div class="panel-box">
+                <div class="panel-label">NEXT</div>
+                <canvas id="nextCanvasV2" width="90" height="90"></canvas>
+              </div>
+              <div class="panel-box stats-box">
+                <div class="stat"><span class="stat-label">SCORE</span><span class="stat-value" id="scoreV2">0</span></div>
+                <div class="stat"><span class="stat-label">LINES</span><span class="stat-value" id="linesV2">0</span></div>
+                <div class="stat"><span class="stat-label">LEVEL</span><span class="stat-value" id="levelV2">1</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GAME BUTTONS -->
+      <div class="game-buttons">
+        <button class="btn btn-small" id="pauseBtn">Pause</button>
+      </div>
+    </div>
+
+    <!-- PAUSE OVERLAY -->
+    <div id="pauseOverlay" class="overlay">
+      <div class="overlay-content pause-box">
+        <h2>PAUSED</h2>
+        <button class="btn btn-primary" id="btnPauseResume">Resume</button>
+        <button class="btn btn-outline" id="btnPauseRestart">Restart</button>
+        <button class="btn btn-outline" id="btnPauseQuit">Main Menu</button>
+      </div>
+    </div>
+
+    <!-- GAME OVER OVERLAY -->
+    <div id="gameoverOverlay" class="overlay">
+      <div class="overlay-content gameover-box">
+        <h2 id="goTitle">GAME OVER</h2>
+        <div class="gameover-stats">
+          <strong>Score:</strong> <span id="goScore">0</span><br>
+          <strong>Level:</strong> <span id="goLevel">1</span><br>
+          <strong>Lines:</strong> <span id="goLines">0</span><br>
+          <strong>Winner:</strong> <span id="goWinner">-</span><br>
+          <strong>Match:</strong> <span id="goMatchScore">0 - 0</span><br>
+          <span id="goMatchResult" style="color:var(--neon-yellow)"></span>
+        </div>
+        <button class="btn btn-primary" id="btnGoRetry">Play Again</button>
+        <button class="btn btn-outline" id="btnGoMenu">Main Menu</button>
+      </div>
+    </div>
+
+    <!-- MATCH OVER OVERLAY -->
+    <div id="matchOverOverlay" class="overlay">
+      <div class="overlay-content gameover-box">
+        <h2>MATCH OVER</h2>
+        <div class="gameover-stats">
+          <strong id="goMatchResult2" style="font-size:1.4rem"></strong>
+        </div>
+        <button class="btn btn-primary" id="btnMatchMenu">Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
