@@ -3,12 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" id="themeColor" content="#d6d1c7">
   <title>Stack — Falling Block Game</title>
+  <script>
+    (() => {
+      try {
+        const savedTheme = localStorage.getItem('stack-theme');
+        const preferredTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : preferredTheme;
+      } catch (_) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app">
     <canvas id="bgCanvas"></canvas>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Switch to dark mode">
+      <span class="theme-toggle-label">Dark mode</span>
+      <span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-thumb"></span></span>
+    </button>
 
     <!-- MAIN MENU -->
     <div id="menuOverlay" class="overlay active">

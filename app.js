@@ -2,11 +2,11 @@
 
 const COLS = 10, ROWS = 20, BUFFER = 2, TOTAL_ROWS = ROWS + BUFFER;
 const PIECE_TYPES = ['I','O','T','S','Z','J','L'];
-const COLORS = { I:'#4f7f91', O:'#d2a642', T:'#806b8f', S:'#638667', Z:'#c95440', J:'#405f8d', L:'#c77b3b', garbage:'#77736b' };
+const COLORS = { I:'#6293a5', O:'#d7b354', T:'#927da0', S:'#739a76', Z:'#cf6855', J:'#5576a3', L:'#cf8b4f', garbage:'#85817a' };
 const DARKER = { I:'#2f5360', O:'#8a6a25', T:'#51445c', S:'#3d5b40', Z:'#823326', J:'#283d5d', L:'#7e4b24', garbage:'#4b4944' };
-const GHOST_ALPHA = 0.25;
-const GRID_COLOR = '#30302c';
-const GRID_BG = '#171715';
+const GHOST_ALPHA = 0.38;
+const GRID_COLOR = '#343531';
+const GRID_BG = '#191a18';
 const SCORE_TABLE = { 1:100, 2:300, 3:500, 4:800 };
 const SOFT_DROP_PTS = 1, HARD_DROP_PTS = 2, COMBO_BONUS = 50;
 const GARBAGE_TABLE = { 2:1, 3:2, 4:4 };
@@ -314,7 +314,7 @@ const Renderer = {
         if (clearRows.indexOf(r) !== -1) {
           const progress = 1 - clearT / LINE_CLEAR_MS;
           const flash = Math.floor(clearT / 55) % 2 === 0;
-          this._cell(ctx, c, vis, cs, flash ? '#f4f0e8' : '#c94d3b', '#171715', 1 - progress * 0.45, 1 + progress * 0.08);
+          this._cell(ctx, c, vis, cs, flash ? '#f4f0e8' : '#b95b49', '#171715', 1 - progress * 0.45, 1 + progress * 0.08);
         } else {
           const impact = lockedSet.has(c + ':' + r) ? Math.min(1, (impactT || 0) / LANDING_IMPACT_MS) : 0;
           this._cell(ctx, c, vis, cs, COLORS[v], DARKER[v], 1, 1, impact);
@@ -393,10 +393,11 @@ class Game {
     this.players = []; this.input = new Input();
     this.p1Wins = 0; this.p2Wins = 0; this.gameNum = 0;
     this.highScore = this._loadHighScore();
+    this.theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
     this.lastT = 0; this.cvs = {}; this.ctx = {};
     this._bgCvs = document.getElementById('bgCanvas');
     this._bgCtx = this._bgCvs.getContext('2d');
-    this._initCanvases(); this._initBG(); this._initUI();
+    this._initCanvases(); this._initBG(); this._initUI(); this._syncThemeToggle();
     this._loop = this._loop.bind(this);
     requestAnimationFrame(this._loop);
   }
@@ -428,15 +429,36 @@ class Game {
     try { localStorage.setItem('stack-high-score', String(score)); }
     catch (_) { /* Storage may be unavailable when opened from a local file. */ }
   }
+  _setTheme(theme) {
+    this.theme = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = this.theme;
+    try { localStorage.setItem('stack-theme', this.theme); }
+    catch (_) { /* Theme persistence is optional when storage is unavailable. */ }
+    this._syncThemeToggle();
+    this._drawBG();
+  }
+  _syncThemeToggle() {
+    const toggle = document.getElementById('themeToggle');
+    if (!toggle) return;
+    const isDark = this.theme === 'dark';
+    toggle.setAttribute('aria-pressed', String(isDark));
+    toggle.setAttribute('aria-label', 'Switch to ' + (isDark ? 'light' : 'dark') + ' mode');
+    const label = toggle.querySelector('.theme-toggle-label');
+    if (label) label.textContent = isDark ? 'Light mode' : 'Dark mode';
+    const themeColor = document.getElementById('themeColor');
+    if (themeColor) themeColor.setAttribute('content', isDark ? '#1c1d1b' : '#d6d1c7');
+  }
   _drawBG() {
     const ctx = this._bgCtx, w = this._bgCvs.width, h = this._bgCvs.height;
-    ctx.fillStyle = '#e7e2d8'; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#c94d3b'; ctx.fillRect(0, 0, w, 7);
-    ctx.strokeStyle = 'rgba(23, 23, 19, 0.12)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(48.5, 7); ctx.lineTo(48.5, h); ctx.stroke();
+    const styles = getComputedStyle(document.documentElement);
+    ctx.fillStyle = styles.getPropertyValue('--paper').trim() || '#d6d1c7';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = styles.getPropertyValue('--accent').trim() || '#a94737';
+    ctx.fillRect(0, 0, w, 4);
   }
   _initUI() {
     const $ = id => document.getElementById(id);
+    $('themeToggle').onclick = () => this._setTheme(this.theme === 'dark' ? 'light' : 'dark');
     $('btnSolo').onclick = () => this._start('solo');
     $('btnVersus').onclick = () => this._start('versus');
     $('btnControls').onclick = () => { $('menuOverlay').classList.remove('active'); $('controlsOverlay').classList.add('active'); };

@@ -5,17 +5,40 @@
 }
 
 :root {
-  --paper: #e7e2d8;
-  --surface: #f4f0e8;
-  --ink: #171715;
-  --muted: #706d65;
-  --rule: #aaa59b;
-  --accent: #c94d3b;
-  --accent-dark: #8e3328;
-  --player-two: #405f8d;
+  color-scheme: light;
+  --paper: #d6d1c7;
+  --surface: #ebe7df;
+  --ink: #252521;
+  --muted: #66635d;
+  --rule: #9d988f;
+  --accent: #a94737;
+  --accent-dark: #87362a;
+  --accent-contrast: #fffaf2;
+  --player-two: #48677f;
+  --shadow: #272722;
+  --overlay-backdrop: rgba(214, 209, 199, 0.97);
+  --key-surface: #dfdad1;
+  --board-rule: #3d3d38;
   --font-display: "Arial Black", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1c1d1b;
+  --surface: #272825;
+  --ink: #dedbd2;
+  --muted: #aaa69d;
+  --rule: #55554f;
+  --accent: #d07864;
+  --accent-dark: #b86453;
+  --accent-contrast: #171816;
+  --player-two: #86a0ba;
+  --shadow: #0e0f0e;
+  --overlay-backdrop: rgba(28, 29, 27, 0.97);
+  --key-surface: #30312e;
+  --board-rule: #4a4b46;
 }
 
 html,
@@ -57,6 +80,61 @@ body::after {
   pointer-events: none;
 }
 
+.theme-toggle {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 200;
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 11px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: 2px 2px 0 var(--shadow);
+  color: var(--ink);
+  font: 700 0.63rem var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.theme-toggle:hover {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.theme-toggle-track {
+  position: relative;
+  display: block;
+  width: 30px;
+  height: 16px;
+  border: 1px solid currentColor;
+  background: var(--key-surface);
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  transition: transform 140ms ease;
+}
+
+:root[data-theme="dark"] .theme-toggle-thumb {
+  transform: translateX(14px);
+}
+
 .hidden {
   display: none !important;
 }
@@ -70,7 +148,7 @@ body::after {
   justify-content: center;
   overflow-y: auto;
   padding: 28px;
-  background: rgba(231, 226, 216, 0.96);
+  background: var(--overlay-backdrop);
   animation: appear 140ms ease-out both;
 }
 
@@ -81,10 +159,10 @@ body::after {
 .overlay-content {
   width: min(620px, 100%);
   padding: 30px;
-  border: 2px solid var(--ink);
+  border: 1px solid var(--ink);
   border-radius: 0;
   background: var(--surface);
-  box-shadow: 10px 10px 0 var(--ink);
+  box-shadow: 5px 5px 0 var(--shadow);
   text-align: left;
 }
 
@@ -160,11 +238,11 @@ body::after {
 .btn {
   min-height: 48px;
   padding: 12px 18px;
-  border: 2px solid var(--ink);
+  border: 1px solid var(--ink);
   border-radius: 0;
   background: var(--surface);
   color: var(--ink);
-  font: 800 0.72rem var(--font-body);
+  font: 800 0.75rem var(--font-body);
   letter-spacing: 0.11em;
   text-transform: uppercase;
   cursor: pointer;
@@ -183,13 +261,13 @@ body::after {
 
 .btn-primary {
   background: var(--accent);
-  color: #fffaf1;
-  box-shadow: 4px 4px 0 var(--ink);
+  color: var(--accent-contrast);
+  box-shadow: 3px 3px 0 var(--shadow);
 }
 
 .btn-primary:hover {
   background: var(--accent-dark);
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: 1px 1px 0 var(--shadow);
   transform: translate(2px, 2px);
 }
 
@@ -243,7 +321,7 @@ body::after {
   margin-right: 5px;
   border: 1px solid var(--ink);
   border-radius: 1px;
-  background: var(--paper);
+  background: var(--key-surface);
   color: var(--ink);
   font: 700 0.67rem var(--font-mono);
   text-align: center;
@@ -266,10 +344,9 @@ body::after {
   border-bottom: 1px solid var(--rule);
 }
 
-.speed-label,
-.panel-label {
+.speed-label {
   color: var(--muted);
-  font: 700 0.59rem var(--font-mono);
+  font: 700 0.62rem var(--font-mono);
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
@@ -410,7 +487,7 @@ body::after {
   border: 2px solid var(--ink);
   border-radius: 0;
   background: var(--surface);
-  box-shadow: 8px 8px 0 var(--ink);
+  box-shadow: 5px 5px 0 var(--shadow);
   animation: board-in 160ms ease-out both;
 }
 
@@ -423,7 +500,7 @@ body::after {
 .board-border {
   position: absolute;
   inset: 6px;
-  border: 1px solid #34342f;
+  border: 1px solid var(--board-rule);
   border-radius: 0;
   pointer-events: none;
 }
@@ -442,7 +519,7 @@ body::after {
 
 .panel-box {
   padding: 11px;
-  border: 2px solid var(--ink);
+  border: 1px solid var(--ink);
   border-radius: 0;
   background: var(--surface);
 }
@@ -451,7 +528,11 @@ body::after {
   display: block;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--rule);
+  color: var(--ink);
+  font: 700 0.65rem var(--font-mono);
+  letter-spacing: 0.14em;
   text-align: left;
+  text-transform: uppercase;
 }
 
 .panel-box canvas {
@@ -469,7 +550,7 @@ body::after {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 7px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--rule);
 }
 
@@ -479,14 +560,14 @@ body::after {
 
 .stat-label {
   color: var(--muted);
-  font: 700 0.54rem var(--font-mono);
+  font: 700 0.61rem var(--font-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .stat-value {
   color: var(--accent);
-  font: 800 0.9rem var(--font-mono);
+  font: 800 0.98rem var(--font-mono);
 }
 
 .player-section {
@@ -604,6 +685,15 @@ body::after {
   font-size: 1.25rem;
 }
 
+body,
+.overlay,
+.overlay-content,
+.board-container,
+.panel-box,
+.key {
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
 @media (max-width: 1050px) {
   body::after { display: none; }
   .game-layout { transform: scale(0.82); transform-origin: top center; }
@@ -612,8 +702,9 @@ body::after {
 }
 
 @media (max-width: 700px) {
-  .overlay { align-items: flex-start; padding: 14px; }
-  .overlay-content { padding: 22px; box-shadow: 6px 6px 0 var(--ink); }
+  .theme-toggle { top: 12px; right: 12px; }
+  .overlay { align-items: flex-start; padding: 62px 14px 14px; }
+  .overlay-content { padding: 22px; box-shadow: 4px 4px 0 var(--shadow); }
   .menu-box::before { top: 20px; right: 20px; font-size: 1.5rem; }
   .game-title { font-size: clamp(3.6rem, 20vw, 5.5rem); }
   .menu-buttons {
