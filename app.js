@@ -556,9 +556,9 @@ class Game {
   }
   _handleSolo(inp, pl, dt) {
     if (!pl.alive) return;
-    let lk, rk, dk, uk, hk, sk;
-    if (this.soloControl === 'wasd') { lk='KeyA'; rk='KeyD'; dk='KeyS'; uk='KeyW'; hk='Space'; sk='KeyC'; }
-    else { lk='ArrowLeft'; rk='ArrowRight'; dk='ArrowDown'; uk='ArrowUp'; hk='Enter'; sk='NumpadDecimal'; }
+    let lk, rk, dk, uk;
+    if (this.soloControl === 'wasd') { lk='KeyA'; rk='KeyD'; dk='KeyS'; uk='KeyW'; }
+    else { lk='ArrowLeft'; rk='ArrowRight'; dk='ArrowDown'; uk='ArrowUp'; }
     if (inp.pressed(lk)) pl.move(-1); else if (inp.down(lk) && inp.dasTick(lk, dt)) pl.move(-1);
     if (inp.pressed(rk)) pl.move(1); else if (inp.down(rk) && inp.dasTick(rk, dt)) pl.move(1);
     if (inp.pressed(uk)) pl.rotate();
@@ -566,8 +566,8 @@ class Game {
       pl.dropAccum += dt;
       while (pl.dropAccum >= SOFT_DROP_INTERVAL) { pl.dropAccum -= SOFT_DROP_INTERVAL; if (pl.softDrop()) { pl.score += SOFT_DROP_PTS; } else break; }
     }
-    if (inp.pressed(hk)) pl.hardDrop();
-    if (inp.pressed(sk)) pl.hold();
+    if (inp.pressed('Space') || inp.pressed('Enter')) pl.hardDrop();
+    if (inp.pressed('KeyC') || inp.pressed('NumpadDecimal')) pl.hold();
   }
   _handleP(inp, pl, dt, num) {
     if (!pl.alive) return;

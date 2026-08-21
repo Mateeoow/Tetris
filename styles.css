@@ -287,7 +287,8 @@ body::after {
 .control-select {
   display: flex;
   align-items: center;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 12px 18px;
   padding: 12px 0 4px;
 }
 
@@ -332,6 +333,33 @@ body::after {
   padding: 2px 5px;
   margin-right: 0;
   font-size: 0.6rem;
+}
+
+.control-shared {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding-left: 18px;
+  border-left: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.control-shared .key {
+  min-width: auto;
+  margin-right: 0;
+  padding: 2px 5px;
+  font-size: 0.6rem;
+}
+
+.control-shared-label {
+  margin-right: 3px;
+}
+
+.control-or {
+  color: var(--faint);
+  font-size: 0.65rem;
 }
 
 .speed-control {
@@ -717,6 +745,13 @@ body,
     grid-template-columns: 1fr;
   }
   .control-select { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .control-shared {
+    width: 100%;
+    margin-left: 0;
+    padding: 9px 0 0;
+    border-top: 1px solid var(--rule);
+    border-left: 0;
+  }
   .speed-control { grid-template-columns: 1fr 44px; }
   .speed-label { grid-column: 1 / -1; }
   .controls-grid { grid-template-columns: 1fr; gap: 18px; }

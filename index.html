@@ -37,11 +37,17 @@
           <div class="control-select" id="soloControlSelect">
             <div class="control-option">
               <input type="radio" id="ctrlWASD" name="soloControl" value="wasd" checked>
-              <label for="ctrlWASD"><span class="key">A</span><span class="key">W</span><span class="key">S</span><span class="key">D</span> + <span class="key">Space</span></label>
+              <label for="ctrlWASD"><span class="key">WASD</span><span>Move</span></label>
             </div>
             <div class="control-option">
               <input type="radio" id="ctrlArrows" name="soloControl" value="arrows">
-              <label for="ctrlArrows"><span class="key">&larr;</span><span class="key">&uarr;</span><span class="key">&darr;</span><span class="key">&rarr;</span> + <span class="key">Enter</span></label>
+              <label for="ctrlArrows"><span class="key">&larr;&uarr;&darr;&rarr;</span><span>Move</span></label>
+            </div>
+            <div class="control-shared" aria-label="Hard drop with Space or Enter">
+              <span class="control-shared-label">Hard drop</span>
+              <span class="key">Space</span>
+              <span class="control-or">or</span>
+              <span class="key">Enter</span>
             </div>
           </div>
           <button class="btn btn-secondary" id="btnVersus">Versus</button>
@@ -67,11 +73,11 @@
         <div class="controls-grid">
           <div class="controls-col">
             <h3>Solo</h3>
-            <div class="key-row"><span class="key">&larr;</span> Move Left</div>
-            <div class="key-row"><span class="key">&rarr;</span> Move Right</div>
-            <div class="key-row"><span class="key">&darr;</span> Soft Drop</div>
-            <div class="key-row"><span class="key">&uarr;</span> Rotate CW</div>
-            <div class="key-row"><span class="key">Space</span> Hard Drop</div>
+            <div class="key-row"><span class="key">A / &larr;</span> Move Left</div>
+            <div class="key-row"><span class="key">D / &rarr;</span> Move Right</div>
+            <div class="key-row"><span class="key">S / &darr;</span> Soft Drop</div>
+            <div class="key-row"><span class="key">W / &uarr;</span> Rotate CW</div>
+            <div class="key-row"><span class="key">Space / Enter</span> Hard Drop</div>
             <div class="key-row"><span class="key">C</span> Hold</div>
           </div>
           <div class="controls-col">
