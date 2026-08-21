@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Neon Stack — Tetris</title>
+  <title>Stack — Falling Block Game</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,11 +13,11 @@
     <!-- MAIN MENU -->
     <div id="menuOverlay" class="overlay active">
       <div class="overlay-content menu-box">
-        <div class="eyebrow">ARCADE MODE / 01</div>
-        <h1 class="title-glow">NEON<br><span>STACK</span></h1>
-        <p class="menu-subtitle">Stack clean. Chase the perfect drop.</p>
+        <div class="eyebrow"><span>Field 01</span><span>Falling blocks</span></div>
+        <h1 class="game-title">STACK</h1>
+        <p class="menu-subtitle">Clear complete rows. Keep the field moving.</p>
         <div class="menu-buttons">
-          <button class="btn btn-primary" id="btnSolo">1 Player Solo</button>
+          <button class="btn btn-primary" id="btnSolo">Solo game</button>
           <div class="control-select" id="soloControlSelect">
             <div class="control-option">
               <input type="radio" id="ctrlWASD" name="soloControl" value="wasd" checked>
@@ -28,9 +28,9 @@
               <label for="ctrlArrows"><span class="key">&larr;</span><span class="key">&uarr;</span><span class="key">&darr;</span><span class="key">&rarr;</span> + <span class="key">Enter</span></label>
             </div>
           </div>
-          <button class="btn btn-secondary" id="btnVersus">2 Player Versus</button>
+          <button class="btn btn-secondary" id="btnVersus">Versus</button>
           <div class="speed-control">
-            <label class="speed-label">BLOCK SPEED</label>
+            <label class="speed-label" for="speedSlider">Drop speed</label>
             <div class="speed-row">
               <span class="speed-val">Slow</span>
               <input type="range" id="speedSlider" min="0.3" max="3" step="0.1" value="1">
@@ -38,8 +38,9 @@
             </div>
             <div class="speed-current" id="speedDisplay">1.0x</div>
           </div>
-          <button class="btn btn-outline" id="btnControls">Controls</button>
+          <button class="btn btn-outline" id="btnControls">How to play</button>
         </div>
+        <div class="menu-note"><span>10 × 20 field</span><span>Best of five in versus</span></div>
       </div>
     </div>
 
@@ -64,14 +65,14 @@
             <div class="key-row"><span class="key">W</span> P1 Rotate</div>
             <div class="key-row"><span class="key">Space</span> P1 Hard Drop</div>
             <div class="key-row"><span class="key">C</span> P1 Hold</div>
-            <div class="key-row" style="margin-top:8px"><span class="key">&larr;/&rarr;</span> P2 Move</div>
+            <div class="key-row key-row-spaced"><span class="key">&larr;/&rarr;</span> P2 Move</div>
             <div class="key-row"><span class="key">&darr;</span> P2 Soft Drop</div>
             <div class="key-row"><span class="key">&uarr;</span> P2 Rotate</div>
             <div class="key-row"><span class="key">Enter</span> P2 Hard Drop</div>
             <div class="key-row"><span class="key">Num0</span> P2 Hold</div>
           </div>
         </div>
-        <div style="text-align:center;margin-top:12px">
+        <div class="controls-pause-row">
           <div class="key-row"><span class="key">Esc</span> Pause</div>
         </div>
         <button class="btn btn-outline" id="btnBackMenu">Back</button>
@@ -202,7 +203,7 @@
           <strong>Lines:</strong> <span id="goLines">0</span><br>
           <strong>Winner:</strong> <span id="goWinner">-</span><br>
           <strong>Match:</strong> <span id="goMatchScore">0 - 0</span><br>
-          <span id="goMatchResult" style="color:var(--neon-yellow)"></span>
+          <span id="goMatchResult" class="match-result"></span>
         </div>
         <button class="btn btn-primary" id="btnGoRetry">Play Again</button>
         <button class="btn btn-outline" id="btnGoMenu">Main Menu</button>
@@ -214,7 +215,7 @@
       <div class="overlay-content gameover-box">
         <h2>MATCH OVER</h2>
         <div class="gameover-stats">
-          <strong id="goMatchResult2" style="font-size:1.4rem"></strong>
+          <strong id="goMatchResult2" class="match-result match-result-large"></strong>
         </div>
         <button class="btn btn-primary" id="btnMatchMenu">Main Menu</button>
       </div>

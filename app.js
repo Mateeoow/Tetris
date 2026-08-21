@@ -2,11 +2,11 @@
 
 const COLS = 10, ROWS = 20, BUFFER = 2, TOTAL_ROWS = ROWS + BUFFER;
 const PIECE_TYPES = ['I','O','T','S','Z','J','L'];
-const COLORS = { I:'#53e8ff', O:'#ffd166', T:'#c084fc', S:'#65e572', Z:'#ff5c8a', J:'#6ea8ff', L:'#ff9d5c', garbage:'#68718a' };
-const DARKER = { I:'#159bb5', O:'#c38d2c', T:'#7548b0', S:'#328d5a', Z:'#b32f62', J:'#3d66b1', L:'#b85d35', garbage:'#3f465d' };
+const COLORS = { I:'#4f7f91', O:'#d2a642', T:'#806b8f', S:'#638667', Z:'#c95440', J:'#405f8d', L:'#c77b3b', garbage:'#77736b' };
+const DARKER = { I:'#2f5360', O:'#8a6a25', T:'#51445c', S:'#3d5b40', Z:'#823326', J:'#283d5d', L:'#7e4b24', garbage:'#4b4944' };
 const GHOST_ALPHA = 0.25;
-const GRID_COLOR = '#1c1c2a';
-const GRID_BG = '#0e0e1a';
+const GRID_COLOR = '#30302c';
+const GRID_BG = '#171715';
 const SCORE_TABLE = { 1:100, 2:300, 3:500, 4:800 };
 const SOFT_DROP_PTS = 1, HARD_DROP_PTS = 2, COMBO_BONUS = 50;
 const GARBAGE_TABLE = { 2:1, 3:2, 4:4 };
@@ -300,11 +300,9 @@ class Input {
 const Renderer = {
   drawBoard(ctx, board, piece, ghostY, cs, clearRows, clearT, lockedCells, impactT) {
     const w = COLS * cs, h = ROWS * cs;
-    const background = ctx.createLinearGradient(0, 0, w, h);
-    background.addColorStop(0, '#10182d'); background.addColorStop(0.55, GRID_BG); background.addColorStop(1, '#100f24');
-    ctx.fillStyle = background; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = GRID_BG; ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = GRID_COLOR; ctx.lineWidth = 0.65;
-    ctx.globalAlpha = 0.8;
+    ctx.globalAlpha = 0.75;
     for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * cs); ctx.lineTo(w, r * cs); ctx.stroke(); }
     for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * cs, 0); ctx.lineTo(c * cs, h); ctx.stroke(); }
     ctx.globalAlpha = 1;
@@ -315,8 +313,8 @@ const Renderer = {
         const vis = r - BUFFER;
         if (clearRows.indexOf(r) !== -1) {
           const progress = 1 - clearT / LINE_CLEAR_MS;
-          const flash = Math.floor(clearT / 45) % 2 === 0;
-          this._cell(ctx, c, vis, cs, flash ? '#ffffff' : COLORS[v], flash ? '#d9e4ff' : DARKER[v], 1 - progress * 0.35, 1 + progress * 0.2);
+          const flash = Math.floor(clearT / 55) % 2 === 0;
+          this._cell(ctx, c, vis, cs, flash ? '#f4f0e8' : '#c94d3b', '#171715', 1 - progress * 0.45, 1 + progress * 0.08);
         } else {
           const impact = lockedSet.has(c + ':' + r) ? Math.min(1, (impactT || 0) / LANDING_IMPACT_MS) : 0;
           this._cell(ctx, c, vis, cs, COLORS[v], DARKER[v], 1, 1, impact);
@@ -339,21 +337,20 @@ const Renderer = {
     }
   },
   _cell(ctx, col, row, s, fill, dark, alpha = 1, scale = 1, impact = 0) {
-    const inset = Math.max(1.5, s * 0.075), size = s - inset * 2;
+    const inset = Math.max(1, s * 0.055), size = s - inset * 2;
     const cx = col * s + s / 2, cy = row * s + s / 2;
     const width = size * scale, height = size * scale;
-    const x = cx - width / 2, y = cy - height / 2, radius = Math.min(5, width * 0.18);
+    const x = cx - width / 2, y = cy - height / 2, radius = Math.min(2, width * 0.08);
     ctx.save();
     ctx.globalAlpha = alpha;
-    if (impact > 0) { ctx.shadowColor = fill; ctx.shadowBlur = 8 + impact * 8; }
-    const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
-    gradient.addColorStop(0, '#ffffff'); gradient.addColorStop(0.08, fill); gradient.addColorStop(0.72, fill); gradient.addColorStop(1, dark || fill);
     this._roundedRect(ctx, x, y, width, height, radius);
-    ctx.fillStyle = gradient; ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.48)'; ctx.lineWidth = Math.max(0.65, s * 0.035); ctx.stroke();
-    ctx.globalAlpha = alpha * 0.2;
-    this._roundedRect(ctx, x + width * 0.12, y + height * 0.1, width * 0.76, Math.max(1.5, height * 0.11), radius * 0.5);
-    ctx.fillStyle = '#ffffff'; ctx.fill();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = dark || '#171715'; ctx.lineWidth = Math.max(1, s * 0.045); ctx.stroke();
+    if (impact > 0) {
+      ctx.globalAlpha = alpha * impact * 0.55;
+      ctx.fillStyle = '#f4f0e8';
+      ctx.fillRect(x + 1, y + height - Math.max(2, height * 0.12), width - 2, Math.max(2, height * 0.12));
+    }
     ctx.restore();
   },
   _roundedRect(ctx, x, y, width, height, radius) {
@@ -367,9 +364,10 @@ const Renderer = {
     ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath();
   },
   _ghost(ctx, col, row, s, color) {
-    const inset = Math.max(1.5, s * 0.075), x = col * s + inset, y = row * s + inset, sz = s - inset * 2;
+    const inset = Math.max(1, s * 0.055), x = col * s + inset, y = row * s + inset, sz = s - inset * 2;
     ctx.save(); ctx.globalAlpha = GHOST_ALPHA; ctx.strokeStyle = color; ctx.lineWidth = 1.5;
-    this._roundedRect(ctx, x, y, sz, sz, Math.min(5, sz * 0.18)); ctx.stroke(); ctx.restore();
+    ctx.setLineDash([Math.max(3, s * 0.18), Math.max(2, s * 0.12)]);
+    this._roundedRect(ctx, x, y, sz, sz, Math.min(2, sz * 0.08)); ctx.stroke(); ctx.restore();
   },
   drawPreview(ctx, type, cs, cw, ch) {
     ctx.clearRect(0, 0, cw, ch);
@@ -398,7 +396,6 @@ class Game {
     this.lastT = 0; this.cvs = {}; this.ctx = {};
     this._bgCvs = document.getElementById('bgCanvas');
     this._bgCtx = this._bgCvs.getContext('2d');
-    this._particles = [];
     this._initCanvases(); this._initBG(); this._initUI();
     this._loop = this._loop.bind(this);
     requestAnimationFrame(this._loop);
@@ -413,38 +410,30 @@ class Game {
   _initBG() {
     this._resizeBG();
     window.addEventListener('resize', () => this._resizeBG());
-    for (let i = 0; i < 60; i++) {
-      this._particles.push({
-        x: Math.random() * this._bgCvs.width, y: Math.random() * this._bgCvs.height,
-        vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
-        r: Math.random() * 1.8 + 0.5, a: Math.random() * 0.25 + 0.05,
-        color: ['#00f5ff','#b537f2','#ff2a6d'][Math.floor(Math.random()*3)]
-      });
-    }
   }
-  _resizeBG() { this._bgCvs.width = window.innerWidth; this._bgCvs.height = window.innerHeight; }
+  _resizeBG() {
+    this._bgCvs.width = window.innerWidth;
+    this._bgCvs.height = window.innerHeight;
+    this._drawBG();
+  }
   _loadHighScore() {
-    try { return Number(localStorage.getItem('neon-tetris-high-score')) || 0; }
+    try {
+      return Number(localStorage.getItem('stack-high-score') || localStorage.getItem('neon-tetris-high-score')) || 0;
+    }
     catch (_) { return 0; }
   }
   _saveHighScore(score) {
     if (score <= this.highScore) return;
     this.highScore = score;
-    try { localStorage.setItem('neon-tetris-high-score', String(score)); }
+    try { localStorage.setItem('stack-high-score', String(score)); }
     catch (_) { /* Storage may be unavailable when opened from a local file. */ }
   }
   _drawBG() {
     const ctx = this._bgCtx, w = this._bgCvs.width, h = this._bgCvs.height;
-    ctx.fillStyle = '#0a0a0f'; ctx.fillRect(0, 0, w, h);
-    for (let i = 0; i < this._particles.length; i++) {
-      const p = this._particles[i];
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
-      if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
-      ctx.globalAlpha = p.a; ctx.fillStyle = p.color;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#e7e2d8'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#c94d3b'; ctx.fillRect(0, 0, w, 7);
+    ctx.strokeStyle = 'rgba(23, 23, 19, 0.12)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(48.5, 7); ctx.lineTo(48.5, h); ctx.stroke();
   }
   _initUI() {
     const $ = id => document.getElementById(id);
@@ -637,7 +626,6 @@ class Game {
   _loop(t) {
     if (this.lastT === 0) this.lastT = t;
     const dt = Math.min(t - this.lastT, MAX_FRAME_MS); this.lastT = t;
-    this._drawBG();
     if (this.state === 'playing') { this._handleInput(dt); this._update(dt); }
     this._render();
     this.input.endFrame();
