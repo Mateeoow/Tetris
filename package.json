@@ -1,0 +1,11 @@
+{
+  "name": "tetris",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "devDependencies": {
+    "fast-check": "3.23.2"
+  }
+}

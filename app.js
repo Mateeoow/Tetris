@@ -517,8 +517,7 @@ class Game {
       $('goMatchScore').textContent = '-';
       $('goMatchResult').textContent = '';
     } else {
-      const loser = this.players[0].alive ? 0 : 1;
-      const winner = 1 - loser;
+      const winner = this.players[0].alive ? 0 : (this.players[1].alive ? 1 : 0);
       if (winner === 0) this.p1Wins++; else this.p2Wins++;
       this._updateWinDisplay();
       const matchDone = this.p1Wins >= Math.ceil(BEST_OF / 2) || this.p2Wins >= Math.ceil(BEST_OF / 2);
